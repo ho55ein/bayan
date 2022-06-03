@@ -13,7 +13,7 @@ def getChanges():
         a_tag = post.find_all("a") [0] # find all <a href = ... > tags 
         title = a_tag.text # title of post
         link = a_tag["href"] # link of post
-        result.append({"title" : title , "link" : link})
+        result.append({"TITLE" : title , "LINK" : link})
 
     return result
 
