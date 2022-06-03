@@ -1,13 +1,16 @@
 from bs4 import BeautifulSoup as bs
 from requests import get
 
+class Weblog404Error(Exception):
+    pass
+
 
 class Weblog:
     def __init__(self , address):
-        self.address = address
-        self.address = self.address.replace("http://" , "https://")
+        self.address = address # address of weblog
+        self.address = self.address.replace("http://" , "https://") # convert http:// to https://
 
-        if not self.address.startswith("https://"):
+        if not self.address.startswith("https://"): # add https:// if not exist
             self.address = "https://" + self.address
         
         
@@ -17,24 +20,25 @@ class Weblog:
         self.name = self.address.replace("https://" , "")
         
 
-        self.rss_address = self.address + "/rss"
+        self.rss_address = self.address + "/rss" # address of rss page
         
 
         self.follow_link = "http://blog.ir/panel/-/followed_blogs?follow={}".format(self.address)
         
-        response = get(self.address)
+        response = get(self.address) # send a request to weblog page
         if response.status_code == 200:
             self.html_parser = bs(response.content , "html.parser")
         else:
-            pass
+            raise Weblog404Error("Weblog {} is not found".format(self.name))
 
-        response = get(self.rss_address)
+        response = get(self.rss_address) # send a request to rss page
         if response.status_code == 200:
             self.rss_parser = bs(response.content , "xml") # lxml should be installed using pip
         else:
             pass
 
-    def extractDigits(self, data):
+    def extractDigits(self, data): 
+        """this function extracts numerical characters from a string"""
         number = ""
         for char in data:
             if char.isdigit():
@@ -45,6 +49,7 @@ class Weblog:
             return None
 
     def getInfo(self):
+        """get Title , posts count , followers count , comments count ..."""
         result = {}
         title = self.rss_parser.title.text
 
@@ -73,8 +78,10 @@ class Weblog:
                 
         if not("FOLLOWERS_COUNT" in result):
             followersTitle = self.html_parser.find("div" , "followersTitle")
+
             if followersTitle:
                 followers_count = self.extractDigits(followersTitle.text)
+
                 if followers_count:
                     result["FOLLOWERS_COUNT"] = followers_count
         
